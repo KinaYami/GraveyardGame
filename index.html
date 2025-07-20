@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creepy Observation Duty</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 1920px;
+            height: 100vh;
+            position: relative;
+            background: #000;
+        }
+
+        .scene {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            cursor: crosshair;
+            display: none;
+        }
+
+        .scene.active {
+            display: block;
+        }
+
+        .scene-graveyard-stones {
+            background-image: url('Background_Graveyard_Stones.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .scene-graveyard-tree {
+            background-image: url('Graveyard_Old_Tree.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .scene-shed-outside {
+            background: linear-gradient(180deg, #34495e 0%, #2c3e50 50%, #1a1a1a 100%);
+        }
+
+        .scene-shed-inside {
+            background: linear-gradient(90deg, #8b4513 0%, #654321 50%, #2f1b14 100%);
+        }
+
+        .scene-mausoleum {
+            background: linear-gradient(225deg, #2c2c54 0%, #40407a 50%, #706fd3 100%);
+        }
+
+        /* Placeholder scene elements */
+        .scene-element {
+            position: absolute;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        /* Graveyard Stones elements */
+        .scene-graveyard-stones .tombstone1 {
+            width: 80px;
+            height: 120px;
+            background: #555;
+            bottom: 20%;
+            left: 15%;
+        }
+
+        .scene-graveyard-stones .tombstone2 {
+            width: 60px;
+            height: 100px;
+            background: #666;
+            bottom: 25%;
+            left: 35%;
+        }
+
+        .scene-graveyard-stones .tombstone3 {
+            width: 70px;
+            height: 110px;
+            background: #444;
+            bottom: 22%;
+            right: 20%;
+        }
+
+        /* Tree scene elements */
+        .scene-graveyard-tree .tree {
+            width: 200px;
+            height: 300px;
+            background: #2d1b0d;
+            bottom: 10%;
+            left: 40%;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .scene-graveyard-tree .swing {
+            width: 40px;
+            height: 8px;
+            background: #8b4513;
+            bottom: 45%;
+            left: 50%;
+        }
+
+        /* Shed outside elements */
+        .scene-shed-outside .shed {
+            width: 300px;
+            height: 200px;
+            background: #654321;
+            bottom: 25%;
+            left: 30%;
+        }
+
+        .scene-shed-outside .door {
+            width: 60px;
+            height: 120px;
+            background: #4a2c17;
+            bottom: 25%;
+            left: 42%;
+        }
+
+        /* Shed inside elements */
+        .scene-shed-inside .shelf {
+            width: 150px;
+            height: 20px;
+            background: #8b4513;
+            top: 30%;
+            left: 20%;
+        }
+
+        .scene-shed-inside .tools {
+            width: 30px;
+            height: 80px;
+            background: #c0c0c0;
+            bottom: 30%;
+            right: 25%;
+        }
+
+        /* Mausoleum elements */
+        .scene-mausoleum .building {
+            width: 250px;
+            height: 180px;
+            background: #555;
+            bottom: 20%;
+            left: 35%;
+        }
+
+        .scene-mausoleum .column1 {
+            width: 20px;
+            height: 150px;
+            background: #777;
+            bottom: 20%;
+            left: 40%;
+        }
+
+        .scene-mausoleum .column2 {
+            width: 20px;
+            height: 150px;
+            background: #777;
+            bottom: 20%;
+            right: 40%;
+        }
+
+        /* UI Elements */
+        .ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #ff6b6b;
+        }
+
+        .score {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #4ecdc4;
+        }
+
+        .strikes {
+            font-size: 18px;
+            color: #ff6b6b;
+        }
+
+        .navigation {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        .nav-button {
+            background: rgba(255, 107, 107, 0.8);
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            margin: 0 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .nav-button:hover {
+            background: rgba(255, 107, 107, 1);
+        }
+
+        .scene-name {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #4ecdc4;
+        }
+
+        /* Aberration highlight */
+        .aberration {
+            animation: pulse 2s infinite;
+            cursor: pointer;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        /* Jump scare overlay */
+        .jumpscare {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: red;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            animation: flash 0.5s;
+        }
+
+        @keyframes flash {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Game over / Win screens */
+        .game-end {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .game-end h2 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .restart-button {
+            background: #4ecdc4;
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .ui {
+                top: 10px;
+                left: 10px;
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .nav-button {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+            
+            .scene-name {
+                bottom: 80px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- UI Elements -->
+        <div class="ui">
+            <div class="score">Score: <span id="score">0</span>/5</div>
+            <div class="strikes">Strikes: <span id="strikes">0</span>/3</div>
+        </div>
+
+        <div class="scene-name">
+            <span id="scene-name">Graveyard: Stones</span>
+        </div>
+
+        <!-- Navigation -->
+        <div class="navigation">
+            <button class="nav-button" id="prev-btn">← Previous</button>
+            <button class="nav-button" id="next-btn">Next →</button>
+        </div>
+
+        <!-- Game Scenes -->
+        <div class="scene scene-graveyard-stones active" data-name="Graveyard: Stones">
+            <div class="scene-element tombstone1"></div>
+            <div class="scene-element tombstone2"></div>
+            <div class="scene-element tombstone3"></div>
+        </div>
+
+        <div class="scene scene-graveyard-tree" data-name="Graveyard: Old Tree">
+            <div class="scene-element tree"></div>
+            <div class="scene-element swing"></div>
+        </div>
+
+        <div class="scene scene-shed-outside" data-name="Groundskeeper Shed: Outside">
+            <div class="scene-element shed"></div>
+            <div class="scene-element door"></div>
+        </div>
+
+        <div class="scene scene-shed-inside" data-name="Groundskeeper Shed: Inside">
+            <div class="scene-element shelf"></div>
+            <div class="scene-element tools"></div>
+        </div>
+
+        <div class="scene scene-mausoleum" data-name="Graveyard: Mausoleum">
+            <div class="scene-element building"></div>
+            <div class="scene-element column1"></div>
+            <div class="scene-element column2"></div>
+        </div>
+
+        <!-- Jump scare overlay -->
+        <div class="jumpscare" id="jumpscare">
+            BOO! 👻
+        </div>
+
+        <!-- Game end screens -->
+        <div class="game-end" id="game-over">
+            <h2>Game Over!</h2>
+            <p>You got too many strikes!</p>
+            <button class="restart-button" onclick="restartGame()">Try Again</button>
+        </div>
+
+        <div class="game-end" id="game-win">
+            <h2>You Win!</h2>
+            <p>You found all the aberrations!</p>
+            <button class="restart-button" onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let currentScene = 0;
+        let score = 0;
+        let strikes = 0;
+        let gameActive = true;
+        let aberrations = [];
+        
+        const scenes = document.querySelectorAll('.scene');
+        const sceneNames = ['Graveyard: Stones', 'Graveyard: Old Tree', 'Groundskeeper Shed: Outside', 'Groundskeeper Shed: Inside', 'Graveyard: Mausoleum'];
+        
+        // Initialize game
+        function initGame() {
+            updateUI();
+            setupNavigation();
+            setupSceneClicks();
+            
+            // Give players time to memorize scenes before aberrations start
+            setTimeout(startAberrations, 10000); // 10 seconds to look around
+        }
+        
+        // Update score and strikes display
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('strikes').textContent = strikes;
+            document.getElementById('scene-name').textContent = sceneNames[currentScene];
+        }
+        
+        // Setup navigation buttons
+        function setupNavigation() {
+            document.getElementById('prev-btn').addEventListener('click', () => {
+                if (gameActive) {
+                    currentScene = currentScene > 0 ? currentScene - 1 : scenes.length - 1;
+                    showScene(currentScene);
+                }
+            });
+            
+            document.getElementById('next-btn').addEventListener('click', () => {
+                if (gameActive) {
+                    currentScene = currentScene < scenes.length - 1 ? currentScene + 1 : 0;
+                    showScene(currentScene);
+                }
+            });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (!gameActive) return;
+                
+                if (e.key === 'ArrowLeft') {
+                    document.getElementById('prev-btn').click();
+                } else if (e.key === 'ArrowRight') {
+                    document.getElementById('next-btn').click();
+                }
+            });
+        }
+        
+        // Show specific scene
+        function showScene(index) {
+            scenes.forEach(scene => scene.classList.remove('active'));
+            scenes[index].classList.add('active');
+            updateUI();
+        }
+        
+        // Setup click handlers for scenes
+        function setupSceneClicks() {
+            scenes.forEach((scene, sceneIndex) => {
+                scene.addEventListener('click', (e) => {
+                    if (!gameActive) return;
+                    
+                    // Check if clicked element is an aberration
+                    if (e.target.classList.contains('aberration')) {
+                        handleCorrectClick(e.target);
+                    } else {
+                        handleIncorrectClick();
+                    }
+                });
+            });
+        }
+        
+        // Handle correct aberration click
+        function handleCorrectClick(element) {
+            score++;
+            element.classList.remove('aberration');
+            element.style.opacity = '0.5'; // Mark as found
+            
+            // Remove from aberrations array
+            aberrations = aberrations.filter(ab => ab.element !== element);
+            
+            updateUI();
+            
+            // Check win condition
+            if (score >= 5) {
+                endGame(true);
+            } else {
+                // Maybe trigger a jump scare occasionally
+                if (Math.random() < 0.3) {
+                    showJumpScare();
+                }
+            }
+        }
+        
+        // Handle incorrect click
+        function handleIncorrectClick() {
+            strikes++;
+            updateUI();
+            
+            // Check lose condition
+            if (strikes >= 3) {
+                endGame(false);
+            }
+        }
+        
+        // Start creating aberrations
+        function startAberrations() {
+            if (!gameActive) return;
+            
+            createAberration();
+            
+            // Schedule next aberration
+            setTimeout(() => {
+                if (gameActive && aberrations.length < 3) {
+                    startAberrations();
+                }
+            }, Math.random() * 15000 + 10000); // Random time between 10-25 seconds
+        }
+        
+        // Create a random aberration
+        function createAberration() {
+            if (!gameActive || aberrations.length >= 3) return;
+            
+            // Pick a random scene
+            const sceneIndex = Math.floor(Math.random() * scenes.length);
+            const scene = scenes[sceneIndex];
+            const elements = scene.querySelectorAll('.scene-element');
+            
+            if (elements.length > 0) {
+                // Pick a random element to become an aberration
+                const elementIndex = Math.floor(Math.random() * elements.length);
+                const element = elements[elementIndex];
+                
+                // Don't create aberration on already aberrant elements
+                if (element.classList.contains('aberration')) return;
+                
+                // Apply aberration effect (change color slightly)
+                element.classList.add('aberration');
+                element.style.filter = 'hue-rotate(180deg) brightness(1.2)';
+                
+                aberrations.push({
+                    element: element,
+                    scene: sceneIndex
+                });
+            }
+        }
+        
+        // Show jump scare
+        function showJumpScare() {
+            const jumpScare = document.getElementById('jumpscare');
+            jumpScare.style.display = 'flex';
+            
+            // Play a sound effect here if you have one
+            // new Audio('jumpscare.mp3').play();
+            
+            setTimeout(() => {
+                jumpScare.style.display = 'none';
+            }, 500);
+        }
+        
+        // End game
+        function endGame(won) {
+            gameActive = false;
+            
+            if (won) {
+                document.getElementById('game-win').style.display = 'flex';
+            } else {
+                document.getElementById('game-over').style.display = 'flex';
+            }
+        }
+        
+        // Restart game
+        function restartGame() {
+            // Reset game state
+            currentScene = 0;
+            score = 0;
+            strikes = 0;
+            gameActive = true;
+            aberrations = [];
+            
+            // Reset UI
+            document.getElementById('game-win').style.display = 'none';
+            document.getElementById('game-over').style.display = 'none';
+            
+            // Reset all scene elements
+            document.querySelectorAll('.scene-element').forEach(element => {
+                element.classList.remove('aberration');
+                element.style.opacity = '1';
+                element.style.filter = 'none';
+            });
+            
+            // Show first scene
+            showScene(0);
+            
+            // Start aberrations after delay
+            setTimeout(startAberrations, 10000);
+        }
+        
+        // Start the game when page loads
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
